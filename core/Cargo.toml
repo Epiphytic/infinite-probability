@@ -24,8 +24,8 @@ path = "src/main.rs"
 
 [dependencies]
 # AISP conversion with LLM fallback
-rosetta-aisp = "0.1"
-rosetta-aisp-llm = "0.1"
+rosetta-aisp = "0.2"
+rosetta-aisp-llm = "0.3"
 aisp = { version = "0.1", features = ["serde"] }
 
 # Async runtime

@@ -5,6 +5,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use infinite_probability_core::prelude::*;
+use rosetta_aisp::{get_all_categories, prose_to_symbol, symbol_to_prose, symbols_by_category};
 use std::io::{self, Read};
 use std::path::PathBuf;
 
@@ -42,9 +43,13 @@ enum Commands {
         #[arg(long)]
         confidence_threshold: Option<f64>,
 
-        /// LLM model to use
+        /// LLM model to use (haiku, sonnet, opus)
         #[arg(long)]
         model: Option<String>,
+
+        /// Use AISP symbolic prompt instead of English prompt for LLM fallback
+        #[arg(long)]
+        aisp_prompt: bool,
 
         /// Output as JSON
         #[arg(long)]
@@ -84,6 +89,39 @@ enum Commands {
         #[arg(short, long)]
         input: Option<PathBuf>,
     },
+
+    /// Perform round-trip conversion to test semantic preservation
+    RoundTrip {
+        /// Input file path (reads from stdin if not provided)
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+
+        /// Number of round-trips to perform
+        #[arg(short, long, default_value = "5")]
+        rounds: usize,
+    },
+
+    /// Look up a symbol for a prose pattern
+    Lookup {
+        /// Prose pattern to look up
+        pattern: String,
+    },
+
+    /// Look up prose for a symbol
+    Reverse {
+        /// AISP symbol to look up
+        symbol: String,
+    },
+
+    /// List all available AISP symbols
+    Symbols {
+        /// Filter by category
+        #[arg(short, long)]
+        category: Option<String>,
+    },
+
+    /// Show all available symbol categories
+    Categories,
 
     /// Configuration management
     Config {
@@ -134,6 +172,7 @@ async fn main() -> Result<()> {
             llm_fallback,
             confidence_threshold,
             model,
+            aisp_prompt,
             json,
             verbose,
         } => {
@@ -158,6 +197,7 @@ async fn main() -> Result<()> {
                 confidence_threshold: Some(effective_threshold),
                 enable_llm_fallback: effective_fallback,
                 llm_model: effective_model,
+                use_aisp_prompt: aisp_prompt,
             };
 
             let result = infinite_probability_core::convert_with_fallback(&prose, Some(options)).await;
@@ -218,6 +258,99 @@ async fn main() -> Result<()> {
             let prose = get_input(input)?;
             let tier = infinite_probability_core::AispConverter::detect_tier(&prose);
             println!("Recommended tier: {}", tier);
+        }
+
+        Commands::RoundTrip { input, rounds } => {
+            let original = get_input(input)?;
+            let mut current = original.clone();
+
+            println!("Original: {}", original);
+            println!();
+
+            for i in 1..=rounds {
+                let (aisp, mapped_chars, _) = RosettaStone::convert(&current);
+                let prose = RosettaStone::to_prose(&aisp);
+                let similarity = RosettaStone::semantic_similarity(&original, &prose);
+                let confidence = RosettaStone::confidence(current.len(), mapped_chars);
+
+                println!(
+                    "Round {} (confidence: {:.1}%, similarity: {:.1}%):",
+                    i,
+                    confidence * 100.0,
+                    similarity * 100.0
+                );
+                println!("  AISP: {}", aisp);
+                println!("  Prose: {}", prose);
+                println!();
+
+                current = prose;
+            }
+
+            let final_similarity = RosettaStone::semantic_similarity(&original, &current);
+            println!("Final semantic similarity: {:.1}%", final_similarity * 100.0);
+
+            if final_similarity < 0.30 {
+                eprintln!("Warning: Semantic drift exceeded acceptable threshold");
+                std::process::exit(1);
+            }
+        }
+
+        Commands::Lookup { pattern } => {
+            match prose_to_symbol(&pattern) {
+                Some(symbol) => println!("{}", symbol),
+                None => {
+                    eprintln!("No symbol found for pattern: {}", pattern);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Reverse { symbol } => {
+            match symbol_to_prose(&symbol) {
+                Some(prose) => println!("{}", prose),
+                None => {
+                    eprintln!("No prose found for symbol: {}", symbol);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Symbols { category } => {
+            match category {
+                Some(cat) => {
+                    let symbols = symbols_by_category(&cat);
+                    if symbols.is_empty() {
+                        eprintln!("No symbols found for category: {}", cat);
+                        eprintln!("Available categories: {:?}", get_all_categories());
+                        std::process::exit(1);
+                    }
+                    for symbol in symbols {
+                        if let Some(prose) = symbol_to_prose(symbol) {
+                            println!("{} → {}", symbol, prose);
+                        } else {
+                            println!("{}", symbol);
+                        }
+                    }
+                }
+                None => {
+                    for category in get_all_categories() {
+                        println!("\n=== {} ===", category);
+                        for symbol in symbols_by_category(category) {
+                            if let Some(prose) = symbol_to_prose(symbol) {
+                                println!("  {} → {}", symbol, prose);
+                            } else {
+                                println!("  {}", symbol);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Commands::Categories => {
+            for category in get_all_categories() {
+                println!("{}", category);
+            }
         }
 
         Commands::Config { action } => match action {
