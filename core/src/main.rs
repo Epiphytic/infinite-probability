@@ -19,17 +19,14 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert prose to AISP
+    /// Convert prose to AISP (AI Structured Protocol) format
+    #[command(visible_alias = "to-aisp")]
     Convert {
-        /// Input prose (reads from stdin if not provided)
+        /// Input file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
 
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
-
-        /// Output file (stdout if not provided)
+        /// Output file path (writes to stdout if not provided)
         #[arg(short, long)]
         output: Option<PathBuf>,
 
@@ -58,37 +55,34 @@ enum Commands {
         verbose: bool,
     },
 
-    /// Convert AISP back to prose
+    /// Convert AISP (AI Structured Protocol) back to human-readable prose
+    #[command(visible_alias = "to-prose")]
     ToProse {
-        /// Input AISP
+        /// Input AISP file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
 
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
+        /// Output file path (writes to stdout if not provided)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
 
-    /// Validate AISP document
+    /// Validate an AISP (AI Structured Protocol) document
     Validate {
-        /// Input AISP
+        /// Input AISP file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
-
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
+        input: Option<PathBuf>,
 
         /// Output as JSON
         #[arg(long)]
         json: bool,
     },
 
-    /// Detect appropriate conversion tier
+    /// Detect appropriate AISP conversion tier for prose input
     Triage {
-        /// Input prose
+        /// Input file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
     },
 
     /// Configuration management
@@ -135,7 +129,6 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Convert {
             input,
-            file,
             output,
             tier,
             llm_fallback,
@@ -145,7 +138,7 @@ async fn main() -> Result<()> {
             verbose,
         } => {
             let config = Config::load()?;
-            let prose = get_input(input, file)?;
+            let prose = get_input(input)?;
 
             // Determine effective values (CLI > Config > Default)
             let effective_tier = tier.unwrap_or(config.aisp.default_tier);
@@ -188,14 +181,14 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::ToProse { input, file } => {
-            let aisp = get_input(input, file)?;
+        Commands::ToProse { input, output } => {
+            let aisp = get_input(input)?;
             let prose = infinite_probability_core::AispConverter::to_prose(&aisp);
-            println!("{}", prose);
+            write_output(&prose, output)?;
         }
 
-        Commands::Validate { input, file, json } => {
-            let aisp = get_input(input, file)?;
+        Commands::Validate { input, json } => {
+            let aisp = get_input(input)?;
             let result = infinite_probability_core::AispConverter::validate(&aisp);
 
             if json {
@@ -222,12 +215,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Triage { input } => {
-            let prose = input.unwrap_or_else(|| {
-                let mut buf = String::new();
-                io::stdin().read_to_string(&mut buf).unwrap();
-                buf
-            });
-
+            let prose = get_input(input)?;
             let tier = infinite_probability_core::AispConverter::detect_tier(&prose);
             println!("Recommended tier: {}", tier);
         }
@@ -272,20 +260,17 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// Get input from argument, file, or stdin
-fn get_input(input: Option<String>, file: Option<PathBuf>) -> Result<String> {
-    if let Some(text) = input {
-        return Ok(text);
+/// Get input from file or stdin
+fn get_input(input: Option<PathBuf>) -> Result<String> {
+    match input {
+        Some(path) => Ok(std::fs::read_to_string(path)?),
+        None => {
+            // Read from stdin
+            let mut buf = String::new();
+            io::stdin().read_to_string(&mut buf)?;
+            Ok(buf)
+        }
     }
-
-    if let Some(path) = file {
-        return Ok(std::fs::read_to_string(path)?);
-    }
-
-    // Read from stdin
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    Ok(buf)
 }
 
 /// Write output to file or stdout

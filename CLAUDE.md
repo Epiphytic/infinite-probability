@@ -39,14 +39,16 @@ Infinite Probability is a Claude Code plugin marketplace for enterprise-scale ag
 ## Core Commands
 
 ```bash
-# infinite-probability-core CLI
-infinite-probability-core daemon --mode merge-queue     # Start merge daemon
-infinite-probability-core cli config get <key>          # Read config
-infinite-probability-core cli translate "<prompt>"      # Translate to AISP
-infinite-probability-core cli memory query "<query>"    # Query memo
+# AISP conversion (prose ↔ AISP)
+infinite-probability convert --input file.md --output file.aisp     # Prose → AISP
+infinite-probability to-prose --input file.aisp --output file.md    # AISP → Prose
+infinite-probability validate --input file.aisp                      # Validate AISP
+infinite-probability triage --input file.md                          # Detect tier
 
-# Documentation conversion
-npx aisp-converter --input file.md --output file.aisp
+# Configuration
+infinite-probability config get <key>           # Read config value
+infinite-probability config show                # Show all config
+infinite-probability config path                # Show config path
 ```
 
 ## Directory Structure
@@ -79,7 +81,7 @@ Secrets go in `.local.toml` files (gitignored).
 
 All documentation must exist in dual format. Convert using:
 ```bash
-npx aisp-converter --input docs/file.md --output docs/file.aisp
+infinite-probability convert --input docs/file.md --output docs/file.aisp
 ```
 
 ## Resources
