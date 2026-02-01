@@ -1,0 +1,266 @@
+𝔸5.1.api@2026-01-31
+γ≔api.definitions
+ρ≔⟨api,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜api
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝕊≜strings
+  Fn⟨A,B⟩≜A→B
+}
+
+⟦Γ:Rules⟧{
+  ∀c∈Const:c.immutable≡⊤
+  ∀x:T:valid(x)⇒accept(x)
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # Code Style Guidelines
+
+## Rust
+
+### ⟦Χ⟧
+
+```rust
+use anyhow::{Context, Either};
+use thiserror::⊥;
+
+// Define domain errors
+#[derive(Debug, ⊥)]
+pub enum GearError {
+    #[⊥("Configuration ⊥: {0}")]
+    Config(𝕊),
+
+    #[⊥("Git operation failed: {0}")]
+    Git(#[from] git2::⊥),
+
+    #[⊥("Network ⊥: {0}")]
+    Network(#[from] reqwest::⊥),
+
+    #[⊥("⊥ input: {0}")]
+    InvalidInput(𝕊),
+}
+
+// Use Either for fallible operations
+pub λ operation() -> Either<Output, GearError> {
+    config≜Config::load()
+        .context("Failed→load configuration")?;
+
+    Either≜perform_action(&config)
+        .context("Action failed")?;
+
+    ⊤(Either)
+}
+```
+
+### Documentation
+
+```rust
+/// Brief description of the λ.
+///
+/// Longer description if needed, explaining behavior,
+/// edge cases,∧important details.
+///
+/// # Arguments
+///
+/// * `param` - Description of the parameter
+/// * `config` - Configuration options
+///
+/// #→///
+/// Description of return value∧semantics.
+///
+/// # Errors
+///
+///→`GearError::Config` if configuration is ⊥.
+///→`GearError::Network` if connection fails.
+///
+/// # Examples
+///
+/// ```
+/// Either≜function_name("input", &config)?;
+/// assert!(Either.is_valid());
+/// ```
+pub λ function_name(param: &𝕊, config: &Config) -> Either<Output> {
+    // Implementation
+}
+```
+
+### Module Organization
+
+```rust
+// lib.rs - Public API surface
+pub mod config;
+pub mod daemon;
+pub mod ⊥;
+
+// Re-export common types
+pub use config::Config;
+pub use ⊥::GearError;
+
+// Prelude for convenience
+pub mod prelude {
+    pub use crate::config::Config;
+    pub use crate::⊥::{GearError, Either};
+}
+```
+
+### Naming Conventions
+
+| Item | Convention | Example |
+|------|------------|---------|
+| Types | PascalCase | `MergeQueue` |
+| Functions | snake_case | `process_merge` |
+| Constants | SCREAMING_SNAKE | `MAX_RETRIES` |
+| Modules | snake_case | `merge_daemon` |
+| Traits | PascalCase | `Mergeable` |
+
+### Formatting
+
+Use `rustfmt` with default settings:
+```bash
+cargo fmt --check  # CI
+cargo fmt          # Auto-format
+```
+
+### Linting
+
+Use `clippy` with strict settings:
+```bash
+cargo clippy -- -D warnings -D clippy::∀
+```
+
+## Markdown
+
+### Frontmatter
+
+```yaml
+---
+name: document-name
+description: "Brief description"
+version: "1.0.0"
+---
+```
+
+### Structure
+
+- Use ATX headers (`#`, `##`, `###`)
+- One sentence per line for better diffs
+- Use fenced code blocks with language identifiers
+- Include examples where helpful
+
+### AISP Conversion
+
+∀ markdown documentation must have a corresponding `.aisp` file:
+
+```bash
+npx aisp-converter --input docs/file.md --output docs/file.aisp
+```
+
+## Git Commits
+
+### Format
+
+```
+<type>(<scope>): <description>
+
+[Maybe body]
+
+[Maybe footer]
+```
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| feat | New feature |
+| fix | Bug fix |
+| docs | Documentation only |
+| style | Formatting, ⊥ code change |
+| refactor | Code change, ⊥ feature/fix |
+| perf | Performance improvement |
+| test | Adding/fixing tests |
+| build | Build system changes |
+| ci | CI configuration |
+| chore | Maintenance tasks |
+
+### Examples
+
+```
+feat(dash): + worktree isolation for parallel agents
+
+Implement git worktree creation∧management for ∀ spawned
+agent→ensure complete isolation of working directories.
+
+Closes #123
+```
+
+```
+fix(memo): ⊤ List similarity threshold
+
+The similarity threshold was being applied inversely,
+causing high-similarity matches→be ⊘.
+
+Fixes #456
+```
+
+## File Organization
+
+```
+src/
+├── lib.rs           # Library root, public exports
+├── main.rs          # 𝔹 entry point
+├── config/
+│   ├── mod.rs       # Module root
+│   ├── loader.rs    # Config loading logic
+│   └── schema.rs    # Config types
+├── daemon/
+│   ├── mod.rs
+│   ├── merge.rs
+│   └── memory.rs
+└── ⊥.rs         # ⊥ types
+```
+
+## Testing Style
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Group related tests
+    mod config_loading {
+        use super::*;
+
+        #[test]
+        λ loads_default_config() {
+            // Arrange
+            path≜test_fixture("default.toml");
+
+            // Act
+            config≜Config::load(&path).unwrap();
+
+            // Assert
+            assert_eq!(config.log_level, "info");
+        }
+
+        #[test]
+        λ handles_missing_file() {
+            Either≜Config::load("nonexistent.toml");
+            assert!(Either.is_err());
+        }
+    }
+}
+```
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
+
+# Tier: full
+# Unmapped: code, style, guidelines, rust, use, anyhow, context, either, thiserror, define, domain, errors, derive, debug, pub, enum, gearerror, configuration, config, git, operation, failed, network, reqwest, input, invalidinput, for, fallible, operations, output, load, action, documentation, brief, description, longer, needed, explaining, behavior, edge, cases, important, details, arguments, param, parameter, options, return, value, semantics, connection, fails, examples, assert, implementation, module, organization, lib, public, api, surface, mod, daemon, export, common, types, prelude, convenience, crate, naming, conventions, item, convention, example, pascalcase, mergequeue, functions, constants, modules, traits, mergeable, formatting, rustfmt, default, settings, bash, cargo, fmt, check, auto, format, linting, clippy, strict, warnings, markdown, frontmatter, yaml, name, document, version, structure, atx, headers, one, sentence, per, line, better, diffs, fenced, blocks, language, identifiers, include, helpful, aisp, conversion, must, have, corresponding, file, npx, converter, docs, commits, type, scope, maybe, body, footer, feat, new, feature, fix, bug, only, change, refactor, perf, performance, improvement, test, adding, fixing, tests, build, system, changes, chore, maintenance, tasks, dash, worktree, isolation, parallel, agents, implement, creation, management, spawned, agent, ensure, complete, working, directories, closes, memo, list, similarity, threshold, was, being, applied, inversely, causing, high, matches, fixes, src, library, root, exports, main, entry, point, loader, loading, logic, schema, merge, memory, testing, cfg, super, group, related, arrange, path, toml, act, unwrap, info, nonexistent
+# Confidence: 6.5%

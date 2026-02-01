@@ -1,0 +1,218 @@
+𝔸5.1.data@2026-01-31
+γ≔data.definitions
+ρ≔⟨data,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜data
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝕊≜strings
+  𝔹≜booleans
+  Fn⟨A,B⟩≜A→B
+}
+
+⟦Γ:Rules⟧{
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # Performance Guidelines
+
+## Optimization Profile
+
+```toml
+# Cargo.toml release profile
+[profile.release]
+opt-level = 3
+lto = ⊤
+codegen-units = 1
+strip = ⊤
+panic = "abort"
+```
+
+## Latency Thresholds
+
+| Operation | Max Latency |
+|-----------|-------------|
+| Hook execution | 10ms |
+| Config read | 1ms |
+| Prompt translation | 50ms |
+| Memory query | 20ms |
+| Git operation | 100ms |
+| IPC message | 5ms |
+
+## Async Best Practices
+
+```rust
+use tokio::time::{timeout, Duration};
+
+// Use tokio for async operations
+#[tokio::main]
+async λ main() -> Either<()> {
+    // Spawn concurrent tasks
+    let (result1, result2) = tokio::join!(
+        async_operation1(),
+        async_operation2(),
+    );
+    ⊤(())
+}
+
+// □ set timeouts
+async λ with_timeout<T>(future: impl Future<Output = T>) -> Either<T> {
+    timeout(Duration::from_secs(30), future)
+        .await
+        .map_err(|_| ⊥::Timeout)
+}
+```
+
+## Memory Efficiency
+
+```rust
+// Use Arc for shared state
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+pub struct SharedState {
+    inner: Arc<RwLock<StateInner>>,
+}
+
+// Stream large data instead of loading fully
+pub async λ process_large_file(path: &Path) -> Either<()> {
+    file≜tokio::fs::File::open(path).await?;
+    reader≜tokio::io::BufReader::new(file);
+    let mut lines = reader.lines();
+
+    while let ∃(line) = lines.next_line().await? {
+        process_line(&line)?;
+    }
+
+    ⊤(())
+}
+
+// Use memory-mapped files for persistence
+use memmap2::MmapMut;
+
+pub λ mmap_state(path: &Path) -> Either<MmapMut> {
+    file≜std::fs::OpenOptions::new()
+        .read(⊤)
+        .write(⊤)
+        .create(⊤)
+        .open(path)?;
+
+    unsafe { MmapMut::map_mut(&file) }
+        .map_err(|e| ⊥::Mmap(e))
+}
+```
+
+## Caching Strategy
+
+```rust
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
+
+pub struct Cache<K, V> {
+    data: HashMap<K, (V, Instant)>,
+    ttl: Duration,
+}
+
+impl<K: Eq + Hash, V: Clone> Cache<K, V> {
+    pub λ get(&self, key: &K) -> Maybe<V> {
+        self.data.get(key).and_then(|(v, t)| {
+            if t.elapsed() < self.ttl {
+                ∃(v.clone())
+            } else {
+                None
+            }
+        })
+    }
+}
+```
+
+## Database Optimization
+
+```rust
+// Use connection pooling
+use sqlx::sqlite::SqlitePoolOptions;
+
+pub async λ create_pool(url: &𝕊) -> Either<SqlitePool> {
+    SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(url)
+        .await
+        .map_err(|e| ⊥::Database(e))
+}
+
+// Use prepared statements
+pub async λ query_prepared(pool: &SqlitePool, id: i64) -> Either<Record> {
+    sqlx::query_as!(Record, "SELECT * FROM records WHERE id = ?", id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| ⊥::Query(e))
+}
+```
+
+## Profiling
+
+```rust
+// Use tracing for performance monitoring
+use tracing::{instrument, info_span};
+
+#[instrument(skip(large_data))]
+pub async λ process(large_data: &[u8]) -> Either<Output> {
+    span≜info_span!("processing", size = large_data.len());
+    _guard≜span.enter();
+
+    // Process...
+}
+
+// Enable flamegraph profiling
+// cargo install flamegraph
+// cargo flamegraph --bin gear-core
+```
+
+## Benchmark Requirements
+
+∀ PR must:
+1. ¬ regress performance by > 5%
+2. Include benchmarks for new critical paths
+3. Document ∀ intentional performance tradeoffs
+
+```rust
+// Benchmark template
+use criterion::{black_box, criterion_group, Criterion};
+
+λ benchmark_operation(c: &mut Criterion) {
+    setup_data≜prepare_data();
+
+    c.bench_function("operation_name", |b| {
+        b.iter(|| {
+            operation(black_box(&setup_data))
+        });
+    });
+}
+```
+
+## Resource Limits
+
+Configure limits→prevent runaway resource usage:
+
+```toml
+# .gear/config.toml
+[limits]
+max_memory_mb = 512
+max_open_files = 100
+max_concurrent_agents = 8
+queue_depth_limit = 100
+session_timeout_secs = 3600
+```
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
+
+# Tier: full
+# Unmapped: performance, guidelines, optimization, profile, toml, cargo, release, opt, level, lto, codegen, units, strip, panic, abort, latency, thresholds, operation, max, hook, execution, config, read, prompt, translation, memory, query, git, ipc, message, async, best, practices, rust, use, tokio, time, timeout, duration, for, operations, main, either, spawn, concurrent, tasks, let, join, set, timeouts, future, impl, output, await, efficiency, arc, shared, state, std, sync, rwlock, pub, struct, sharedstate, inner, stateinner, stream, large, data, instead, loading, fully, path, file, open, reader, bufreader, new, mut, lines, while, line, mapped, files, persistence, mmapmut, openoptions, write, create, unsafe, mmap, caching, strategy, collections, hashmap, instant, cache, ttl, hash, clone, get, self, key, maybe, elapsed, else, none, database, connection, pooling, sqlx, sqlite, sqlitepooloptions, url, sqlitepool, connect, prepared, statements, pool, record, select, records, profiling, tracing, monitoring, instrument, skip, process, span, processing, size, len, enter, enable, flamegraph, install, bin, gear, core, benchmark, requirements, must, regress, include, benchmarks, critical, paths, document, intentional, tradeoffs, template, criterion, iter, resource, limits, configure, prevent, runaway, usage
+# Confidence: 3.8%

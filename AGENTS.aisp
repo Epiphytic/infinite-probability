@@ -1,0 +1,233 @@
+𝔸5.1.data@2026-01-31
+γ≔data.definitions
+ρ≔⟨data,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜data
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝕊≜strings
+  List⟨T⟩≜⟨items:T*⟩
+}
+
+⟦Γ:Rules⟧{
+  ∀x:T:valid(x)⇒accept(x)
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # Agent Development Guide
+
+## Overview
+
+Agents are autonomous subprocesses that handle specific tasks with their own tool access∧permissions. Infinite Probability plugins use agents extensively for parallel work coordination.
+
+## Agent File Structure
+
+```
+agents/
+└── <agent-name>.md
+```
+
+## Frontmatter Schema
+
+```yaml
+---
+name: agent-name
+description: "Purpose∧when this agent should be used"
+tools: "Read, Glob, Grep, Bash, Write, Edit"
+disallowedTools: "Task"
+model: "sonnet"
+permissionMode: "default"
+skills:
+  - shared-skill-one
+  - shared-skill-two
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/validate.sh"
+---
+```
+
+## Field Reference
+
+### name
+Agent identifier. Use kebab-case.
+
+### description
+Critical for auto-invocation. Describes when the agent should be triggered.
+
+### tools
+Comma-separated List of allowed tools:
+- `Read`, `Write`, `Edit` - File operations
+- `Glob`, `Grep` - Search operations
+- `Bash` - Shell commands
+- `Task` - Spawn sub-agents
+- `WebFetch`, `WebSearch` - Web operations
+
+### disallowedTools
+Tools explicitly denied even if∈`tools` List.
+
+### model
+Which Claude model→use:
+- `sonnet` - Balanced performance/cost
+- `opus` - ≤ capability
+- `haiku` - Fast, economical
+- `inherit` - Use parent model (default)
+
+### permissionMode
+How→handle permission requests:
+- `default` - Standard permission checking
+- `acceptEdits` - Auto-accept file edits
+- `dontAsk` - Auto-deny permission prompts
+- `bypassPermissions` - Skip ∀ checks (use with caution)
+- `plan` - Read-only exploration mode
+
+### skills
+List of skill names the agent can use.
+
+### hooks
+Agent-specific hook configuration.
+
+## Example Agents
+
+### Code Reviewer
+
+```yaml
+---
+name: code-reviewer
+description: "Reviews code for quality, security,∧best practices. Use when code review is needed before merge."
+tools: "Read, Glob, Grep"
+disallowedTools: "Write, Edit, Bash"
+model: "sonnet"
+permissionMode: "plan"
+---
+
+You are a code reviewer for the Infinite Probability plugin ecosystem.
+
+## Review Criteria
+
+1. **Security**: Check for vulnerabilities, injection risks, secret exposure
+2. **Performance**: Identify inefficiencies, unnecessary allocations
+3. **Style**: Verify adherence→code-style.md guidelines
+4. **Testing**: Ensure adequate test coverage
+
+## Output Format
+
+Provide findings as:
+- CRITICAL: Must fix before merge
+- WARNING: Should fix, ¬ blocking
+- INFO: Suggestions for improvement
+```
+
+### Worktree Agent
+
+```yaml
+---
+name: worktree-agent
+description: "Operates∈an isolated git worktree for parallel code changes"
+tools: "Read, Write, Edit, Glob, Grep, Bash"
+model: "sonnet"
+permissionMode: "acceptEdits"
+---
+
+You are operating∈an isolated git worktree.
+
+## Rules
+
+1. ∀ changes stay∈your worktree until merged
+2. Commit frequently with descriptive messages
+3. Do ¬ modify files ∉ your worktree
+4. Signal completion by creating `.∎` marker file
+```
+
+### Memory Query Agent
+
+```yaml
+---
+name: memory-agent
+description: "Queries∧manages the memo distributed memory system"
+tools: "Read, Bash"
+disallowedTools: "Write, Edit"
+model: "haiku"
+---
+
+You query the memo memory system using infinite-probability-core.
+
+## Commands
+
+```bash
+# Query memory
+infinite-probability-core cli memory query "<query>" --tier project
+
+# List recent memories
+infinite-probability-core cli memory List --limit 10
+
+# Get memory by ID
+infinite-probability-core cli memory get <id>
+```
+
+Return relevant memories→inform the parent task.
+```
+
+## Agent Communication
+
+### With Parent
+Agents return results through their final output, which is passed back→the spawning context.
+
+### With infinite-probability-core
+Agents interact with infinite-probability-core via Bash:
+```bash
+infinite-probability-core cli <command> <args>
+```
+
+### With Other Agents
+Agents do ¬ directly communicate. Coordination happens through:
+1. infinite-probability-core IPC
+2. Shared filesystem state
+3. Parent orchestration
+
+## Best Practices
+
+1. **Single Responsibility**: ∀ agent should do one thing well
+2. **Minimal Tools**: Only grant tools the agent needs
+3. **Clear Description**: Enable accurate auto-invocation
+4. **Explicit Permissions**: Use appropriate permissionMode
+5. **Skill Reuse**: Share common skills across agents
+
+## Infinite Probability-Specific Agents
+
+### dash agents
+- `worktree-agent` - Isolated parallel work
+- `merge-agent` - Handles merge queue processing
+
+### memo agents
+- `memory-agent` - Query∧retrieve memories
+- `learning-agent` - Extract∧store learnings
+
+### guide agents
+- `plan-reviewer` - Reviews implementation plans
+- `code-reviewer` - Reviews code changes
+
+### tango agents
+- `instance-launcher` - Spawns new Claude instances
+- `coordinator` - Manages multi-instance work
+
+## Machine-Readable Reference
+
+For detailed AISP-formatted agent specifications, see:
+- `docs/architecture.aisp` - System architecture
+- `AGENTS.aisp` - This document∈AISP format
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
+
+# Tier: full
+# Unmapped: agent, development, guide, overview, agents, are, autonomous, subprocesses, handle, specific, tasks, their, own, tool, access, permissions, infinite-probability, plugins, use, extensively, for, parallel, work, coordination, file, structure, name, frontmatter, schema, yaml, description, purpose, should, used, tools, read, glob, grep, bash, write, edit, disallowedtools, task, model, sonnet, permissionmode, default, skills, shared, skill, one, two, hooks, pretooluse, matcher, type, command, validate, field, reference, identifier, kebab, case, critical, auto, invocation, describes, triggered, comma, separated, list, allowed, operations, search, shell, commands, spawn, sub, webfetch, websearch, web, explicitly, denied, even, claude, balanced, performance, cost, opus, capability, haiku, fast, economical, inherit, parent, how, permission, requests, standard, checking, acceptedits, accept, edits, dontask, deny, prompts, bypasspermissions, skip, checks, caution, plan, only, exploration, mode, names, can, hook, configuration, example, code, reviewer, reviews, quality, security, best, practices, review, needed, before, merge, you, plugin, ecosystem, criteria, check, vulnerabilities, injection, risks, secret, exposure, identify, inefficiencies, unnecessary, allocations, style, verify, adherence, guidelines, testing, ensure, adequate, test, coverage, output, format, provide, findings, must, fix, warning, blocking, info, suggestions, improvement, worktree, operates, isolated, git, changes, operating, rules, stay, your, until, merged, commit, frequently, descriptive, messages, modify, files, signal, completion, creating, marker, memory, query, queries, manages, memo, distributed, system, using, core, cli, tier, project, recent, memories, limit, get, return, relevant, inform, communication, results, through, final, passed, back, spawning, context, interact, via, args, other, directly, communicate, happens, ipc, filesystem, state, orchestration, single, responsibility, thing, well, minimal, grant, needs, clear, enable, accurate, explicit, appropriate, reuse, share, common, across, dash, handles, queue, processing, retrieve, learning, extract, store, learnings, implementation, plans, tango, instance, launcher, spawns, new, instances, coordinator, multi, machine, readable, detailed, aisp, formatted, specifications, see, docs, architecture, document
+# Confidence: 2.0%

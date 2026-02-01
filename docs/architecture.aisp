@@ -1,0 +1,149 @@
+𝔸5.1.domain@2026-01-31
+γ≔domain.definitions
+ρ≔⟨domain,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜domain
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝕊≜strings
+}
+
+⟦Γ:Rules⟧{
+  ∀x:T:valid(x)⇒accept(x)
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # Gear Architecture
+
+## Overview
+
+Gear≜Claude Code plugin marketplace for enterprise-scale agentic workflows. It provides a unified ecosystem of interconnected plugins powered by a common Rust 𝔹 (`gear-core`).
+
+## Core Principles
+
+1. **Rust-First**: ∀ heavy lifting encoded∈Rust, avoiding bash scripts∧AI prompts for core logic
+2. **Performance Paramount**: ∀ PR must pass performance benchmarks
+3. **Security by Design**: ∀ plugins built with security∧safety as primary concerns
+4. **Modular Shared Libraries**: ≤ code reuse through the `gear-core` 𝔹
+5. **Unified Configuration**: Global, local,∧project-level settings via common system
+
+## Plugin Suite
+
+### gear (Entry Point)
+Onboarding plugin that bootstraps new projects∧manages the plugin ecosystem.
+- `/first` skill: Interactive project setup wizard
+- `/config` command: Interface→unified configuration system
+
+### dash (Workflow Orchestration)
+Multi-agent git workflow orchestrator with isolated worktrees∧FIFO merge queue.
+- Isolated git worktrees per agent
+- Angular-style commit conventions
+- Automatic PR creation∧labeling
+
+### babelfish (Prompt Translation)
+Transforms ℕ language prompts into precise AI-optimized instructions using AISP.
+- Structured prompt enhancement
+- Context injection∧ambiguity resolution
+
+### memo (Distributed Memory)
+Multi-tiered memory system for cross-project learning.
+- List-based semantic memory
+- Project, workspace,∧global tiers
+
+### uplink (Global Orchestration)
+Links Claude Code instances for distributed coordination.
+- Cross-machine instance registration
+- Task distribution∧load balancing
+
+### guide (⟦Ε⟧ Coordinator)
+External LLM ⟦Ε⟧ for plans∧code merges.
+- Plan review before implementation
+- Confidence scoring∧risk assessment
+
+### tango (Instance Launcher)
+Spawns∧manages Claude instances locally∧remotely.
+- Local∧remote instance management
+- Resource allocation∧pooling
+
+### ∞-improbability-drive (Meta-Orchestration)
+Intelligent orchestration layer coordinating ∀ plugins for impossible tasks.
+- Multi-machine task decomposition
+- ⊥ recovery
+
+## Unified Rust 𝔹: gear-core
+
+∀ plugins share a single Rust 𝔹 with multiple modes:
+
+```
+gear-core
+├── daemon     # Background services (merge queue, memory, uplink)
+├── cli        # Command-line interface ∀ operations
+├── ipc        # Inter-process communication (Unix sockets)
+├── config     # Configuration management
+├── memory     # List storage∧retrieval
+├── git        # Git operations (worktree, merge, branch)
+├── translate  # Prompt translation engine
+├── network    # Cross-machine communication
+└── metrics    # Performance monitoring
+```
+
+Invocation:
+```bash
+gear-core daemon --mode merge-queue
+gear-core cli config get <key>
+gear-core cli translate "<prompt>"
+```
+
+## Directory Structure
+
+```
+gear/
+├── CLAUDE.md                    # Essential instructions
+├── AGENTS.md                    # Agent development
+├── .claude-plugin/
+│   └── marketplace.json
+├── docs/                        # Documentation (.md∧.aisp)
+│   ├── architecture.md/.aisp
+│   ├── plugin-development.md/.aisp
+│   ├── configuration.md/.aisp
+│   ├── testing.md/.aisp
+│   ├── security.md/.aisp
+│   └── performance.md/.aisp
+├── core/                        # Shared Rust 𝔹
+│   ├── Cargo.toml
+│   └── src/
+├── plugins/
+│   ├── gear/
+│   ├── dash/
+│   ├── babelfish/
+│   ├── memo/
+│   ├── uplink/
+│   ├── guide/
+│   ├── tango/
+│   └── ∞-improbability-drive/
+├── tests/
+│   ├── integration/
+│   ├── performance/
+│   └── e2e/
+└── .github/workflows/
+```
+
+## Cross-Plugin Communication
+
+Plugins communicate through:
+1. **gear-core IPC** - Unix domain sockets
+2. **Shared state** - `.gear/` directory
+3. **Config system** - Shared configuration
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
+
+# Tier: full
+# Unmapped: gear, architecture, overview, claude, code, plugin, marketplace, for, enterprise, scale, agentic, workflows, provides, unified, ecosystem, interconnected, plugins, powered, common, rust, core, principles, first, heavy, lifting, encoded, avoiding, bash, scripts, prompts, logic, performance, paramount, must, pass, benchmarks, security, design, built, safety, primary, concerns, modular, shared, libraries, reuse, through, configuration, global, local, project, level, settings, via, system, suite, entry, point, onboarding, bootstraps, new, projects, manages, skill, interactive, setup, wizard, config, command, interface, dash, workflow, orchestration, multi, agent, git, orchestrator, isolated, worktrees, fifo, merge, queue, per, angular, style, commit, conventions, automatic, creation, labeling, babelfish, prompt, translation, transforms, language, precise, optimized, instructions, using, aisp, structured, enhancement, context, injection, ambiguity, resolution, memo, distributed, memory, tiered, cross, learning, list, based, semantic, workspace, tiers, uplink, links, instances, coordination, machine, instance, registration, task, distribution, load, balancing, guide, coordinator, external, llm, plans, merges, plan, review, before, implementation, confidence, scoring, risk, assessment, tango, launcher, spawns, locally, remotely, remote, management, resource, allocation, pooling, improbability, drive, meta, intelligent, layer, coordinating, impossible, tasks, decomposition, recovery, share, single, multiple, modes, daemon, background, services, cli, line, operations, ipc, inter, process, communication, unix, sockets, storage, retrieval, worktree, branch, translate, engine, network, metrics, monitoring, invocation, mode, get, key, directory, structure, essential, agents, development, json, docs, documentation, testing, cargo, toml, src, tests, integration, github, communicate, domain, state
+# Confidence: 4.7%

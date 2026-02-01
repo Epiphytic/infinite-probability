@@ -1,0 +1,192 @@
+𝔸5.1.auth@2026-01-31
+γ≔auth.definitions
+ρ≔⟨auth,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜auth
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝕊≜strings
+  User≜⟨id:ℕ,name:𝕊⟩
+  List⟨T⟩≜⟨items:T*⟩
+}
+
+⟦Γ:Rules⟧{
+  ∀x:T:valid(x)⇒accept(x)
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # Security Guidelines
+
+## Core Principles
+
+1. **Defense∈Depth** - Multiple layers of security
+2. **Least Privilege** - Minimal permissions by default
+3. **Fail Secure** - Errors should ¬ expose vulnerabilities
+4. **Input ⟦Ε⟧** - Never trust external input
+
+## Input ⟦Ε⟧
+
+```rust
+pub λ process_prompt(input: &𝕊) -> Either<𝕊> {
+    // Sanitize
+    sanitized≜sanitize_input(input)?;
+
+    // Validate length
+    if sanitized.len() > MAX_PROMPT_LENGTH {
+        return Err(⊥::InputTooLong);
+    }
+
+    // Check for injection patterns
+    if contains_injection_patterns(&sanitized) {
+        return Err(⊥::PotentialInjection);
+    }
+
+    ⊤(sanitized)
+}
+
+λ sanitize_input(input: &𝕊) -> Either<𝕊> {
+    // Remove ∅ bytes
+    cleaned≜input.replace('\0', "");
+
+    // Normalize unicode
+    normalized≜unicode_normalization::nfc(&cleaned);
+
+    ⊤(normalized.to_string())
+}
+```
+
+## Secrets Management
+
+Rules:
+- **Never** store secrets∈code∨tracked config files
+- Use environment variables∨secure vaults
+- Secrets∈`.local.md` files must be gitignored
+- Rotate API keys regularly
+- Use `gear-core cli secrets` for encrypted storage
+
+```rust
+// Reading secrets safely
+pub λ get_api_key() -> Either<𝕊> {
+    // Priority: env var > secrets store > ⊥
+    if let ⊤(key) = std::env::var("GEAR_API_KEY") {
+        return ⊤(key);
+    }
+
+    if let ∃(key) = secrets_store::get("api_key")? {
+        return ⊤(key);
+    }
+
+    Err(⊥::MissingApiKey)
+}
+```
+
+## Network Security
+
+Requirements:
+- ∀ uplink communication ÷ TLS 1.3+
+- Certificate pinning for critical endpoints
+- Rate limiting on ∀ APIs
+- Authentication required for cross-machine operations
+
+```rust
+// Secure HTTP client configuration
+pub λ secure_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .min_tls_version(tls::Version::TLS_1_3)
+        .timeout(Duration::from_secs(30))
+        .build()
+        .expect("Failed→build secure client")
+}
+```
+
+## Hook Security
+
+Guidelines:
+- Hooks run with user permissions
+- Validate ∀ hook input JSON
+- Use `${CLAUDE_PLUGIN_ROOT}` for paths
+- Timeout ∀ hook operations
+- Never execute arbitrary commands from hook input
+
+```rust
+// Safe hook input parsing
+pub λ parse_hook_input(input: &𝕊) -> Either<HookInput> {
+    let parsed: HookInput = serde_json::from_str(input)
+        .map_err(|_| ⊥::InvalidHookInput)?;
+
+    // Validate fields
+    if parsed.tool_name.⊇("..") {
+        return Err(⊥::PathTraversal);
+    }
+
+    ⊤(parsed)
+}
+```
+
+## File System Security
+
+```rust
+// Safe path handling
+pub λ safe_path(base: &Path, user_path: &𝕊) -> Either<PathBuf> {
+    requested≜PathBuf::from(user_path);
+
+    // Prevent path traversal
+    if user_path.⊇("..") {
+        return Err(⊥::PathTraversal);
+    }
+
+    full_path≜base.join(&requested);
+
+    // Ensure path stays within base
+    if !full_path.starts_with(base) {
+        return Err(⊥::PathEscape);
+    }
+
+    ⊤(full_path)
+}
+```
+
+## Authentication
+
+For uplink∧cross-machine operations:
+- Use short-lived tokens (1 hour max)
+- Implement token refresh mechanism
+- Support MFA for sensitive operations
+- Log ∀ authentication attempts
+
+## Audit Logging
+
+```rust
+pub λ audit_log(event: &AuditEvent) {
+    tracing::info!(
+        event_type = %event.event_type,
+        user = %event.user,
+        resource = %event.resource,
+        action = %event.action,
+        Either = %event.Either,
+        "Audit event"
+    );
+}
+```
+
+## Security Checklist for PRs
+
+- [ ] ⊥ hardcoded secrets
+- [ ] Input ⟦Ε⟧ on ∀ external data
+- [ ] Proper ⟦Χ⟧ (⊥ sensitive info∈errors)
+- [ ] Rate limiting considered
+- [ ] Authentication/authorization checks
+- [ ] Audit logging for sensitive operations
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
+
+# Tier: full
+# Unmapped: security, guidelines, core, principles, defense, depth, multiple, layers, least, privilege, minimal, permissions, default, fail, secure, errors, should, expose, vulnerabilities, input, never, trust, external, rust, pub, either, sanitize, sanitized, validate, length, len, return, err, inputtoolong, check, for, injection, patterns, potentialinjection, remove, bytes, cleaned, replace, normalize, unicode, normalized, nfc, secrets, management, rules, store, code, tracked, config, files, use, environment, variables, vaults, local, must, gitignored, rotate, api, keys, regularly, gear, cli, encrypted, storage, reading, safely, priority, env, var, let, key, std, get, missingapikey, network, requirements, uplink, communication, tls, certificate, pinning, critical, endpoints, rate, limiting, apis, authentication, required, cross, machine, operations, http, client, configuration, reqwest, builder, version, timeout, duration, build, expect, failed, hook, hooks, run, user, json, paths, execute, arbitrary, commands, safe, parsing, hookinput, parsed, invalidhookinput, fields, pathtraversal, file, system, path, handling, base, pathbuf, requested, prevent, traversal, join, ensure, stays, within, pathescape, short, lived, tokens, hour, max, implement, token, refresh, mechanism, support, mfa, sensitive, log, attempts, audit, logging, event, auditevent, tracing, info, resource, action, checklist, prs, hardcoded, data, proper, considered, authorization, checks
+# Confidence: 6.7%
