@@ -1,1 +1,119 @@
-CLAUDE.md
+𝔸5.1.data@2026-02-01
+γ≔data.definitions
+ρ≔⟨data,types,rules⟩
+
+⟦Ω:Meta⟧{
+  domain≜data
+  version≜1.0.0
+  ∀D∈AISP:Ambig(D)<0.02
+}
+
+⟦Σ:Types⟧{
+  𝔹≜booleans
+}
+
+⟦Γ:Rules⟧{
+  ∀x:T:valid(x)⇒accept(x)
+  ∀x∈S:P(x)
+  ∀x:T:require(x)⇒proceed(x)
+}
+
+⟦Λ:Funcs⟧{
+  # ∞ Probability Plugin Marketplace
+
+∞ Probability≜Claude Code plugin marketplace for enterprise-scale agentic workflows, powered by a unified Rust 𝔹 (`∞-probability-core`).
+
+## Essential Rules
+
+1. **Rust-First**: ∀ core logic∈Rust, avoid bash scripts for heavy lifting
+2. **Performance**: ∀ PR must pass benchmarks, max 5% regression allowed
+3. **Security**: Validate ∀ input, never store secrets∈code
+4. **Dual Documentation**: ∀ docs∈`.md`∧`.aisp` format
+5. **Testing**: Unit, integration,∧performance tests required on ∀ PRs
+
+## Quick Reference
+
+| Need | Document |
+|------|----------|
+| System architecture | `docs/architecture.aisp` |
+| Building plugins | `docs/plugin-development.aisp` |
+| Configuration | `docs/configuration.aisp` |
+| Writing tests | `docs/testing.aisp` |
+| Security practices | `docs/security.aisp` |
+| Performance tuning | `docs/performance.aisp` |
+| Code style | `docs/code-style.aisp` |
+| Agent development | `AGENTS.aisp` |
+
+## Plugin Suite
+
+| Plugin | Ψ |
+|--------|---------|
+| ∞-probability | Entry point, project setup (`/first`, `/config`) |
+| dash | Git workflow orchestration with isolated worktrees |
+| babelfish | Prompt translation→AISP format |
+| memo | Distributed List memory across projects |
+| uplink | Cross-machine instance coordination |
+| guide | External LLM ⟦Ε⟧ for plans/code |
+| tango | Instance spawning (local∧remote) |
+| ∞-improbability-drive | Meta-orchestration for impossible tasks |
+
+## Core Commands
+
+```bash
+# AISP conversion (prose ↔ AISP)
+∞-probability convert --input file.md --output file.aisp     # Prose→AISP
+∞-probability→-prose --input file.aisp --output file.md    # AISP→Prose
+∞-probability validate --input file.aisp                      # Validate AISP
+∞-probability triage --input file.md                          # Detect tier
+
+# Configuration
+∞-probability config get <key>           # Read config value
+∞-probability config show                # Show ∀ config
+∞-probability config path                # Show config path
+```
+
+## Directory 𝔾
+
+```
+∞-probability/
+├── CLAUDE.md, CLAUDE.aisp       # Essential instructions
+├── AGENTS.md, AGENTS.aisp       # Agent development
+├── docs/                        # ∀ docs (.md + .aisp)
+├── core/                        # Rust 𝔹 source
+├── plugins/                     # Individual plugins
+├── tests/                       # Test suites
+└── .github/workflows/           # CI/CD
+```
+
+## Commit Convention
+
+```
+<type>(<scope>): <description>
+```
+Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+
+## Configuration Hierarchy
+
+1. Default→2. Global (`~/.config/∞-probability/`)→3. Project (`.∞-probability/`)→4. Environment (`GEAR_*`)→5. CLI flags
+
+Secrets go∈`.local.toml` files (gitignored).
+
+## Creating .aisp Files
+
+∀ documentation must exist∈dual format. Convert using:
+```bash
+∞-probability convert --input docs/file.md --output docs/file.aisp
+```
+
+## Resources
+
+- Human docs: `docs/*.md`
+- Machine docs: `docs/*.aisp`
+- Agent guide: `AGENTS.md` / `AGENTS.aisp`
+}
+
+⟦Χ:Errors⟧{
+  ∅
+}
+
+⟦Ε⟧⟨δ≜0.82;φ≜100;τ≜◊⁺⁺;⊢valid;∎⟩
