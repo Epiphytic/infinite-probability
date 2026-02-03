@@ -12,11 +12,15 @@
     {
       "name": "agent-fork-join",
       "description": "Multi-agent git workflow orchestrator with isolated worktrees, FIFO merge queue, and automated PR lifecycle management.",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "author": {
-        "name": "badal-io"
+        "name": "epiphytic"
       },
-      "source": "./plugins/agent-fork-join",
+      "source": {
+        "source": "github",
+        "repo": "epiphytic/agent-fork-join"
+      },
+      "repository": "https://github.com/epiphytic/agent-fork-join",
       "category": "development"
     },
     {
