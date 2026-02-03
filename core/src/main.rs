@@ -5,6 +5,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use infinite_probability_core::prelude::*;
+use rosetta_aisp::{get_all_categories, prose_to_symbol, symbol_to_prose, symbols_by_category};
 use std::io::{self, Read};
 use std::path::PathBuf;
 
@@ -19,17 +20,14 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert prose to AISP
+    /// Convert prose to AISP (AI Structured Protocol) format
+    #[command(visible_alias = "to-aisp")]
     Convert {
-        /// Input prose (reads from stdin if not provided)
+        /// Input file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
 
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
-
-        /// Output file (stdout if not provided)
+        /// Output file path (writes to stdout if not provided)
         #[arg(short, long)]
         output: Option<PathBuf>,
 
@@ -45,9 +43,13 @@ enum Commands {
         #[arg(long)]
         confidence_threshold: Option<f64>,
 
-        /// LLM model to use
+        /// LLM model to use (haiku, sonnet, opus)
         #[arg(long)]
         model: Option<String>,
+
+        /// Use AISP symbolic prompt instead of English prompt for LLM fallback
+        #[arg(long)]
+        aisp_prompt: bool,
 
         /// Output as JSON
         #[arg(long)]
@@ -58,38 +60,68 @@ enum Commands {
         verbose: bool,
     },
 
-    /// Convert AISP back to prose
+    /// Convert AISP (AI Structured Protocol) back to human-readable prose
+    #[command(visible_alias = "to-prose")]
     ToProse {
-        /// Input AISP
+        /// Input AISP file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
 
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
+        /// Output file path (writes to stdout if not provided)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
 
-    /// Validate AISP document
+    /// Validate an AISP (AI Structured Protocol) document
     Validate {
-        /// Input AISP
+        /// Input AISP file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
-
-        /// Input file
-        #[arg(short = 'f', long)]
-        file: Option<PathBuf>,
+        input: Option<PathBuf>,
 
         /// Output as JSON
         #[arg(long)]
         json: bool,
     },
 
-    /// Detect appropriate conversion tier
+    /// Detect appropriate AISP conversion tier for prose input
     Triage {
-        /// Input prose
+        /// Input file path (reads from stdin if not provided)
         #[arg(short, long)]
-        input: Option<String>,
+        input: Option<PathBuf>,
     },
+
+    /// Perform round-trip conversion to test semantic preservation
+    RoundTrip {
+        /// Input file path (reads from stdin if not provided)
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+
+        /// Number of round-trips to perform
+        #[arg(short, long, default_value = "5")]
+        rounds: usize,
+    },
+
+    /// Look up a symbol for a prose pattern
+    Lookup {
+        /// Prose pattern to look up
+        pattern: String,
+    },
+
+    /// Look up prose for a symbol
+    Reverse {
+        /// AISP symbol to look up
+        symbol: String,
+    },
+
+    /// List all available AISP symbols
+    Symbols {
+        /// Filter by category
+        #[arg(short, long)]
+        category: Option<String>,
+    },
+
+    /// Show all available symbol categories
+    Categories,
 
     /// Configuration management
     Config {
@@ -135,17 +167,17 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Convert {
             input,
-            file,
             output,
             tier,
             llm_fallback,
             confidence_threshold,
             model,
+            aisp_prompt,
             json,
             verbose,
         } => {
             let config = Config::load()?;
-            let prose = get_input(input, file)?;
+            let prose = get_input(input)?;
 
             // Determine effective values (CLI > Config > Default)
             let effective_tier = tier.unwrap_or(config.aisp.default_tier);
@@ -165,6 +197,7 @@ async fn main() -> Result<()> {
                 confidence_threshold: Some(effective_threshold),
                 enable_llm_fallback: effective_fallback,
                 llm_model: effective_model,
+                use_aisp_prompt: aisp_prompt,
             };
 
             let result = infinite_probability_core::convert_with_fallback(&prose, Some(options)).await;
@@ -188,14 +221,14 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::ToProse { input, file } => {
-            let aisp = get_input(input, file)?;
+        Commands::ToProse { input, output } => {
+            let aisp = get_input(input)?;
             let prose = infinite_probability_core::AispConverter::to_prose(&aisp);
-            println!("{}", prose);
+            write_output(&prose, output)?;
         }
 
-        Commands::Validate { input, file, json } => {
-            let aisp = get_input(input, file)?;
+        Commands::Validate { input, json } => {
+            let aisp = get_input(input)?;
             let result = infinite_probability_core::AispConverter::validate(&aisp);
 
             if json {
@@ -222,14 +255,102 @@ async fn main() -> Result<()> {
         }
 
         Commands::Triage { input } => {
-            let prose = input.unwrap_or_else(|| {
-                let mut buf = String::new();
-                io::stdin().read_to_string(&mut buf).unwrap();
-                buf
-            });
-
+            let prose = get_input(input)?;
             let tier = infinite_probability_core::AispConverter::detect_tier(&prose);
             println!("Recommended tier: {}", tier);
+        }
+
+        Commands::RoundTrip { input, rounds } => {
+            let original = get_input(input)?;
+            let mut current = original.clone();
+
+            println!("Original: {}", original);
+            println!();
+
+            for i in 1..=rounds {
+                let (aisp, mapped_chars, _) = RosettaStone::convert(&current);
+                let prose = RosettaStone::to_prose(&aisp);
+                let similarity = RosettaStone::semantic_similarity(&original, &prose);
+                let confidence = RosettaStone::confidence(current.len(), mapped_chars);
+
+                println!(
+                    "Round {} (confidence: {:.1}%, similarity: {:.1}%):",
+                    i,
+                    confidence * 100.0,
+                    similarity * 100.0
+                );
+                println!("  AISP: {}", aisp);
+                println!("  Prose: {}", prose);
+                println!();
+
+                current = prose;
+            }
+
+            let final_similarity = RosettaStone::semantic_similarity(&original, &current);
+            println!("Final semantic similarity: {:.1}%", final_similarity * 100.0);
+
+            if final_similarity < 0.30 {
+                eprintln!("Warning: Semantic drift exceeded acceptable threshold");
+                std::process::exit(1);
+            }
+        }
+
+        Commands::Lookup { pattern } => {
+            match prose_to_symbol(&pattern) {
+                Some(symbol) => println!("{}", symbol),
+                None => {
+                    eprintln!("No symbol found for pattern: {}", pattern);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Reverse { symbol } => {
+            match symbol_to_prose(&symbol) {
+                Some(prose) => println!("{}", prose),
+                None => {
+                    eprintln!("No prose found for symbol: {}", symbol);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Symbols { category } => {
+            match category {
+                Some(cat) => {
+                    let symbols = symbols_by_category(&cat);
+                    if symbols.is_empty() {
+                        eprintln!("No symbols found for category: {}", cat);
+                        eprintln!("Available categories: {:?}", get_all_categories());
+                        std::process::exit(1);
+                    }
+                    for symbol in symbols {
+                        if let Some(prose) = symbol_to_prose(symbol) {
+                            println!("{} → {}", symbol, prose);
+                        } else {
+                            println!("{}", symbol);
+                        }
+                    }
+                }
+                None => {
+                    for category in get_all_categories() {
+                        println!("\n=== {} ===", category);
+                        for symbol in symbols_by_category(category) {
+                            if let Some(prose) = symbol_to_prose(symbol) {
+                                println!("  {} → {}", symbol, prose);
+                            } else {
+                                println!("  {}", symbol);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Commands::Categories => {
+            for category in get_all_categories() {
+                println!("{}", category);
+            }
         }
 
         Commands::Config { action } => match action {
@@ -272,20 +393,17 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// Get input from argument, file, or stdin
-fn get_input(input: Option<String>, file: Option<PathBuf>) -> Result<String> {
-    if let Some(text) = input {
-        return Ok(text);
+/// Get input from file or stdin
+fn get_input(input: Option<PathBuf>) -> Result<String> {
+    match input {
+        Some(path) => Ok(std::fs::read_to_string(path)?),
+        None => {
+            // Read from stdin
+            let mut buf = String::new();
+            io::stdin().read_to_string(&mut buf)?;
+            Ok(buf)
+        }
     }
-
-    if let Some(path) = file {
-        return Ok(std::fs::read_to_string(path)?);
-    }
-
-    // Read from stdin
-    let mut buf = String::new();
-    io::stdin().read_to_string(&mut buf)?;
-    Ok(buf)
 }
 
 /// Write output to file or stdout

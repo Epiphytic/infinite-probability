@@ -4,9 +4,15 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.90"
 authors = ["epiphytic"]
-description = "Core library for Infinite Probability plugin marketplace - AISP conversion with Claude SDK fallback"
+description = "Core library and CLI for Infinite Probability plugin marketplace - AISP (AI Structured Protocol) conversion with Claude SDK fallback"
 license = "MIT"
 repository = "https://github.com/epiphytic/infinite-probability"
+homepage = "https://github.com/epiphytic/infinite-probability"
+documentation = "https://docs.rs/infinite-probability-core"
+readme = "../README.md"
+keywords = ["aisp", "ai", "claude", "llm", "conversion"]
+categories = ["command-line-utilities", "development-tools", "text-processing"]
+publish = true
 
 [lib]
 name = "infinite_probability_core"
@@ -18,8 +24,8 @@ path = "src/main.rs"
 
 [dependencies]
 # AISP conversion with LLM fallback
-rosetta-aisp = "0.1"
-rosetta-aisp-llm = "0.1"
+rosetta-aisp = "0.2"
+rosetta-aisp-llm = "0.3"
 aisp = { version = "0.1", features = ["serde"] }
 
 # Async runtime
