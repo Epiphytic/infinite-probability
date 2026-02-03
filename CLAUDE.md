@@ -1,6 +1,12 @@
 # Infinite Probability Plugin Marketplace
 
-Infinite Probability is a Claude Code plugin marketplace for enterprise-scale agentic workflows, powered by a unified Rust binary (`infinite-probability-core`).
+Infinite Probability is a Claude Code plugin marketplace for enterprise-scale agentic workflows,
+powered by rust.
+
+Rules for how plugin marketplaces are configured are here:
+https://code.claude.com/docs/en/plugin-marketplaces
+Plugins part of the marketplace are here: .claude-plugin/marketplace.json
+
 
 ## Essential Rules
 

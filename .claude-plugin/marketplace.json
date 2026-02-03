@@ -1,0 +1,43 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "enterprise-agent-flows",
+  "version": "1.0.0",
+  "description": "Agent Flows for enterprise use cases",
+  "owner": {
+    "name": "badal-io",
+    "url": "https://github.com/badal-io"
+  },
+  "repository": "https://github.com/badal-io/enterprise-agent-flows",
+  "plugins": [
+    {
+      "name": "agent-fork-join",
+      "description": "Multi-agent git workflow orchestrator with isolated worktrees, FIFO merge queue, and automated PR lifecycle management.",
+      "version": "0.4.0",
+      "author": {
+        "name": "badal-io"
+      },
+      "source": "./plugins/agent-fork-join",
+      "category": "development"
+    },
+    {
+      "name": "jira",
+      "description": "Complete JIRA integration for development workflows with ticket tracking, smart commits, PR automation, and bidirectional sync via beads.",
+      "version": "1.1.0",
+      "author": {
+        "name": "badal-io"
+      },
+      "source": "./plugins/jira",
+      "category": "development"
+    },
+    {
+      "name": "docs",
+      "description": "Bootstrap and manage documentation for badal-io repositories using standardized templates",
+      "version": "1.1.0",
+      "author": {
+        "name": "badal-io"
+      },
+      "source": "./plugins/docs",
+      "category": "documentation"
+    }
+  ]
+}
